@@ -126,9 +126,10 @@
         Dim oPO As PO
         Dim otekPagos As FrmtekPagos
         Dim coForm As SAPbouiCOM.Form
-        Dim DocNum, DocEntry As String
+        Dim DocNum, DocEntry, stTabla As String
         Dim stQueryH As String
         Dim oRecSetH As SAPbobsCOM.Recordset
+        Dim oDatatable As SAPbouiCOM.DBDataSource
         oRecSetH = SBOCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset)
 
         Try
@@ -146,9 +147,11 @@
                                     '--- Boton Movimientos del Pedido
                         Case "btMov"
 
+                            stTabla = "OPOR"
                             coForm = SBOApplication.Forms.Item(FormUID)
-                            DocNum = coForm.Items().Item(8).ToString
-                            'coForm.DataSources.UserDataSources.Items(8).Value
+
+                            oDatatable = coForm.DataSources.DBDataSources.Item(stTabla)
+                            DocNum = oDatatable.GetValue("DocNum", 0)
 
                             MsgBox(DocNum)
 
@@ -163,6 +166,8 @@
 
                                 oRecSetH.MoveFirst()
                                 DocEntry = oRecSetH.Fields.Item("DocEntry").Value
+
+                                MsgBox(DocEntry)
 
                                 otekPagos = New FrmtekPagos
                                 otekPagos.openForm(csDirectory)

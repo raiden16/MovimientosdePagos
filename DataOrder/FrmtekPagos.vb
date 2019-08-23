@@ -118,17 +118,12 @@
         Dim oRecSet As SAPbobsCOM.Recordset
 
         Try
+
             oGrid = coForm.Items.Item("1").Specific
             oGrid.DataTable.Clear()
             oRecSet = cSBOCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset)
 
-            stQuery = " Select T3.""DocNum"" 
-                        From ""OPOR"" T0 
-                        Inner Join ""POR1"" T1 on T1.""DocEntry""=T0.""DocEntry""
-                        Left Outer Join ""DPO1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode""=T1.""ItemCode""
-                        Left Outer Join ""ODPO"" T3 on T3.""DocEntry""=T2.""DocEntry""
-                        Where T0.""DocEntry"" =" & stDocEntry &
-                        "group by T3.""DocNum"""
+            stQuery = "Select T3.""DocNum"" From ""OPOR"" T0 Inner Join ""POR1"" T1 on T1.""DocEntry""=T0.""DocEntry"" Left Outer Join ""DPO1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode""=T1.""ItemCode"" Left Outer Join ""ODPO"" T3 on T3.""DocEntry""=T2.""DocEntry"" Where T0.""DocEntry"" =" & stDocEntry & "group by T3.""DocNum"""
 
             oGrid.DataTable.ExecuteQuery(stQuery)
 
