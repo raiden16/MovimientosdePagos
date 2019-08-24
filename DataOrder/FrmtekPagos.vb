@@ -18,7 +18,6 @@
 
     '//----- ABRE LA FORMA DENTRO DE LA APLICACION
     Public Sub openForm(ByVal psDirectory As String)
-        'Dim loButton As SAPbouiCOM.LinkedButton
 
         Try
             csFormUID = "tekPagos"
@@ -32,7 +31,7 @@
             setForm(csFormUID)
 
             coForm.Title = coForm.Title & ". Pedido: " & stDocNum
-            '---- refresaca forma
+            '---- refresca forma
             coForm.Refresh()
             coForm.Visible = True
 
@@ -90,11 +89,7 @@
         Dim oGrid As SAPbouiCOM.Grid
 
         Try
-            bindUserDataSources = 0 '
-            'DATASOURCE PARA LA CAJA DE TEXTO DE LA DIRECCION.
-            'loDS = coForm.DataSources.UserDataSources.Add("dsStatus", SAPbouiCOM.BoDataType.dt_SHORT_TEXT) 'Creo el datasources
-            'oCombo = coForm.Items.Item("5").Specific  'identifico mi caja de texto
-            'oCombo.DataBind.SetBound(True, "", "dsStatus")   ' uno mi userdatasources a mi caja de texto
+            bindUserDataSources = 0
 
             oGrid = coForm.Items.Item("1").Specific
             oDataTable = coForm.DataSources.DataTables.Add("Movimientos")
@@ -123,7 +118,25 @@
             oGrid.DataTable.Clear()
             oRecSet = cSBOCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset)
 
-            stQuery = "Select T3.""DocNum"" From ""OPOR"" T0 Inner Join ""POR1"" T1 on T1.""DocEntry""=T0.""DocEntry"" Left Outer Join ""DPO1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode""=T1.""ItemCode"" Left Outer Join ""ODPO"" T3 on T3.""DocEntry""=T2.""DocEntry"" Where T0.""DocEntry"" =" & stDocEntry & "group by T3.""DocNum"""
+            stQuery = "Select 
+
+                       case when ifnull(T5.""DocNum"",0)=0 then 'Factura de Anticipo' else 'Pago Efectuado' end as ""Movimiento"",
+
+                       case when ifnull(T5.""DocNum"",0)=0 then case when T3.""DocCur""<>'MXN' then T3.""DocTotalFC"" else T3.""DocTotal"" end else  
+                       case when T5.""DocCurr""<>'MXN' then T5.""DocTotalFC"" else T5.""DocTotal"" end
+                       end as ""Monto"",
+
+                       case when ifnull(T5.""DocNum"",0)=0 then T3.""DocCur"" else T5.""DocCurr"" end as ""Moneda""
+
+                       From ""OPOR"" T0 
+                       Inner Join ""POR1"" T1 on T1.""DocEntry""=T0.""DocEntry"" 
+                       Left Outer Join ""DPO1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode""=T1.""ItemCode"" 
+                       Left Outer Join ""ODPO"" T3 on T3.""DocEntry""=T2.""DocEntry"" 
+                       Left Outer Join ""VPM2"" T4 on T4.""DocEntry""=T3.""DocEntry"" and T4.""InvType""=T3.""ObjType""
+                       Left Outer Join ""OVPM"" T5 on T5.""DocEntry""=T4.""DocNum""
+                       Where T0.""DocEntry"" = " & stDocEntry & " 
+                       group by T3.""DocNum"",T3.""ObjType"",T3.""DocEntry"",T5.""DocNum"",T3.""DocTotal"",T5.""DocCurr"",T5.""DocTotalFC"",T5.""DocTotal"",T3.""DocCur"",T3.""DocTotalFC"",T3.""DocTotal""
+                      "
 
             oGrid.DataTable.ExecuteQuery(stQuery)
 
