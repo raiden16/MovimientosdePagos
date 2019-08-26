@@ -17,9 +17,14 @@
     Private Property stRuta As String
 
     '//----- ABRE LA FORMA DENTRO DE LA APLICACION
-    Public Sub openForm(ByVal psDirectory As String)
+    Public Sub openForm(ByVal psDirectory As String, ByVal psDocEntry As String, ByVal psTotal As Integer)
+        Dim stQueryH As String
+        Dim oRecSetH As SAPbobsCOM.Recordset
+        Dim Monto As Integer
 
         Try
+
+            oRecSetH = cSBOCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset)
             csFormUID = "tekPagos"
             '//CARGA LA FORMA
             If (loadFormXML(cSBOApplication, csFormUID, psDirectory + "\Forms\" + csFormUID + ".srf") <> 0) Then
@@ -30,7 +35,59 @@
             '--- Referencia de Forma
             setForm(csFormUID)
 
-            coForm.Title = coForm.Title & ". Pedido: " & stDocNum
+            stQueryH = "Select 'Total' as ""Movimiento"", Sum(T0.""Monto"") as ""Monto"", T0.""Moneda"" from
+
+                       (Select 
+
+                       case when T3.""DocCur""<>'MXN' then T3.""DocTotalFC"" else T3.""DocTotal"" end as ""Monto"",
+
+                       T3.""DocCur"" as ""Moneda"",
+
+                       T3.""DocNum"" 
+
+                       From ""OPOR"" T0 
+                       Inner Join ""POR1"" T1 on T1.""DocEntry""=T0.""DocEntry""
+                       Left Outer Join ""DPO1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode""=T1.""ItemCode"" and T2.""TrgetEntry""<>19
+                       Left Outer Join ""ODPO"" T3 on T3.""DocEntry""=T2.""DocEntry""
+                       Where T0.""DocEntry"" = " & psDocEntry & " 
+                       group by T3.""DocNum"",T3.""DocCur"",T3.""DocTotalFC"",T3.""DocTotal""
+                       
+                       UNION ALL
+                       
+                       Select 
+
+                       case when T3.""DocCur""<>'MXN' then T3.""DocTotalFC"" else T3.""DocTotal"" end as ""Monto"",
+
+                       T3.""DocCur"" as ""Moneda"",
+
+                       T3.""DocNum"" 
+
+                       From ""OPOR"" T0 
+                       Inner Join ""POR1"" T1 on T1.""DocEntry""=T0.""DocEntry""
+                       Left Outer Join ""PCH1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode""=T1.""ItemCode"" and T2.""TrgetEntry""<>19
+                       Left Outer Join ""OPCH"" T3 on T3.""DocEntry""=T2.""DocEntry""
+                       Where T0.""DocEntry"" = " & psDocEntry & " 
+                       group by T3.""DocNum"",T3.""DocCur"",T3.""DocTotalFC"",T3.""DocTotal"") T0
+
+                       where T0.""Monto"" is not null
+                       
+                       group by T0.""Moneda"";"
+
+            oRecSetH.DoQuery(stQueryH)
+
+            If oRecSetH.RecordCount > 0 Then
+                oRecSetH.MoveFirst()
+
+                Monto = oRecSetH.Fields.Item("Monto").Value
+
+                If Monto = psTotal Then
+
+                    coForm.Items.Item("4").Enabled = False
+
+                End If
+
+            End If
+
             '---- refresca forma
             coForm.Refresh()
             coForm.Visible = True
@@ -118,25 +175,7 @@
             oGrid.DataTable.Clear()
             oRecSet = cSBOCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset)
 
-            stQuery = "Select 
-
-                       case when ifnull(T5.""DocNum"",0)=0 then 'Factura de Anticipo' else 'Pago Efectuado' end as ""Movimiento"",
-
-                       case when ifnull(T5.""DocNum"",0)=0 then case when T3.""DocCur""<>'MXN' then T3.""DocTotalFC"" else T3.""DocTotal"" end else  
-                       case when T5.""DocCurr""<>'MXN' then T5.""DocTotalFC"" else T5.""DocTotal"" end
-                       end as ""Monto"",
-
-                       case when ifnull(T5.""DocNum"",0)=0 then T3.""DocCur"" else T5.""DocCurr"" end as ""Moneda""
-
-                       From ""OPOR"" T0 
-                       Inner Join ""POR1"" T1 on T1.""DocEntry""=T0.""DocEntry"" 
-                       Left Outer Join ""DPO1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode""=T1.""ItemCode"" 
-                       Left Outer Join ""ODPO"" T3 on T3.""DocEntry""=T2.""DocEntry"" 
-                       Left Outer Join ""VPM2"" T4 on T4.""DocEntry""=T3.""DocEntry"" and T4.""InvType""=T3.""ObjType""
-                       Left Outer Join ""OVPM"" T5 on T5.""DocEntry""=T4.""DocNum""
-                       Where T0.""DocEntry"" = " & stDocEntry & " 
-                       group by T3.""DocNum"",T3.""ObjType"",T3.""DocEntry"",T5.""DocNum"",T3.""DocTotal"",T5.""DocCurr"",T5.""DocTotalFC"",T5.""DocTotal"",T3.""DocCur"",T3.""DocTotalFC"",T3.""DocTotal""
-                      "
+            stQuery = "call ""Movimientos_de_Pedidos"" ('" & stDocEntry & "')"
 
             oGrid.DataTable.ExecuteQuery(stQuery)
 

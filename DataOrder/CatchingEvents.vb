@@ -126,7 +126,8 @@
         Dim oPO As PO
         Dim otekPagos As FrmtekPagos
         Dim coForm As SAPbouiCOM.Form
-        Dim DocNum, DocEntry, stTabla As String
+        Dim DocNum, DocEntry, stTabla, DocCur As String
+        Dim DocTotal As Integer
         Dim stQueryH As String
         Dim oRecSetH As SAPbobsCOM.Recordset
         Dim oDatatable As SAPbouiCOM.DBDataSource
@@ -152,8 +153,13 @@
 
                             oDatatable = coForm.DataSources.DBDataSources.Item(stTabla)
                             DocNum = oDatatable.GetValue("DocNum", 0)
+                            DocCur = oDatatable.GetValue("DocCur", 0)
 
-                            MsgBox(DocNum)
+                            If DocCur = "MXN" Then
+                                DocTotal = oDatatable.GetValue("DocTotal", 0)
+                            Else
+                                DocTotal = oDatatable.GetValue("DocTotalFC", 0)
+                            End If
 
                             If (DocNum Is Nothing) Or (DocNum = "") Then
                                 DocNum = "0"
@@ -167,10 +173,8 @@
                                 oRecSetH.MoveFirst()
                                 DocEntry = oRecSetH.Fields.Item("DocEntry").Value
 
-                                MsgBox(DocEntry)
-
                                 otekPagos = New FrmtekPagos
-                                otekPagos.openForm(csDirectory)
+                                otekPagos.openForm(csDirectory, DocEntry, DocTotal)
                                 otekPagos.cargarMovimientos(DocEntry)
 
                             End If
