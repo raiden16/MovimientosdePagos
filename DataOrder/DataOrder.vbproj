@@ -74,6 +74,7 @@
   <ItemGroup>
     <Compile Include="CatchingEvents.vb" />
     <Compile Include="CommonFunc.vb" />
+    <Compile Include="Invoices.vb" />
     <Compile Include="PO.vb" />
     <Compile Include="SubMain.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />

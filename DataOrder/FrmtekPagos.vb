@@ -6,6 +6,7 @@
     Private csFormUID As String
     Private stDocNum As String
 
+
     '//----- METODO DE CREACION DE LA CLASE
     Public Sub New()
         MyBase.New()
@@ -14,7 +15,7 @@
         Me.stDocNum = stDocNum
     End Sub
 
-    Private Property stRuta As String
+    'Private Property stRuta As String
 
     '//----- ABRE LA FORMA DENTRO DE LA APLICACION
     Public Sub openForm(ByVal psDirectory As String, ByVal psDocEntry As String, ByVal psTotal As Integer)
@@ -47,7 +48,7 @@
 
                        From ""OPOR"" T0 
                        Inner Join ""POR1"" T1 on T1.""DocEntry""=T0.""DocEntry""
-                       Left Outer Join ""DPO1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode""=T1.""ItemCode"" and T2.""TrgetEntry""<>19
+                       Left Outer Join ""DPO1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode""=T1.""ItemCode"" and ifnull(T2.""TrgetEntry"",0)<>19
                        Left Outer Join ""ODPO"" T3 on T3.""DocEntry""=T2.""DocEntry""
                        Where T0.""DocEntry"" = " & psDocEntry & " 
                        group by T3.""DocNum"",T3.""DocCur"",T3.""DocTotalFC"",T3.""DocTotal""
@@ -64,7 +65,7 @@
 
                        From ""OPOR"" T0 
                        Inner Join ""POR1"" T1 on T1.""DocEntry""=T0.""DocEntry""
-                       Left Outer Join ""PCH1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode""=T1.""ItemCode"" and T2.""TrgetEntry""<>19
+                       Left Outer Join ""PCH1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode""=T1.""ItemCode"" and ifnull(T2.""TrgetEntry"",0)<>19
                        Left Outer Join ""OPCH"" T3 on T3.""DocEntry""=T2.""DocEntry""
                        Where T0.""DocEntry"" = " & psDocEntry & " 
                        group by T3.""DocNum"",T3.""DocCur"",T3.""DocTotalFC"",T3.""DocTotal"") T0
@@ -100,11 +101,13 @@
         End Try
     End Sub
 
+
     '//----- CIERRA LA VENTANA
     Public Function close() As Integer
         close = 0
         coForm.Close()
     End Function
+
 
     '//----- ABRE LA FORMA DENTRO DE LA APLICACION
     Public Function setForm(ByVal psFormUID As String) As Integer
@@ -119,6 +122,7 @@
             setForm = -1
         End Try
     End Function
+
 
     '//----- OBTIENE LA REFERENCIA A LOS USERDATASOURCES
     Private Function getUserDataSources() As Integer
@@ -138,6 +142,7 @@
         End Try
     End Function
 
+
     '//----- ASOCIA LOS USERDATA A ITEMS
     Private Function bindUserDataSources() As Integer
         Dim loText As SAPbouiCOM.EditText
@@ -147,6 +152,10 @@
 
         Try
             bindUserDataSources = 0
+
+            loDS = coForm.DataSources.UserDataSources.Add("dsMonto", SAPbouiCOM.BoDataType.dt_SHORT_TEXT) 'Creo el datasources
+            loText = coForm.Items.Item("3").Specific  'identifico mi caja de texto
+            loText.DataBind.SetBound(True, "", "dsMonto")   ' uno mi userdatasources a mi caja de texto
 
             oGrid = coForm.Items.Item("1").Specific
             oDataTable = coForm.DataSources.DataTables.Add("Movimientos")
@@ -162,6 +171,7 @@
             oGrid = Nothing
         End Try
     End Function
+
 
     '----- carga los procesos de carga
     Public Function cargarMovimientos(stDocEntry As String)

@@ -3,6 +3,8 @@
     Friend WithEvents SBOApplication As SAPbouiCOM.Application '//OBJETO DE APLICACION
     Friend SBOCompany As SAPbobsCOM.Company '//OBJETO COMPAÑIA
     Friend csDirectory As String '//DIRECTORIO DONDE SE ENCUENTRAN LOS .SRF
+    Friend DocEntry As String
+    Dim DocTotal As Integer
 
     Public Sub New()
         MyBase.New()
@@ -108,16 +110,19 @@
         Else
             If pVal.Before_Action = False And pVal.FormTypeEx <> "" Then
                 Select Case pVal.FormTypeEx
-                    Case "tekPagos"                     '////// FORMA RESERVA DE PEDIDOS
-                        'frmPagosControllerAfter(FormUID, pVal)
+
                     Case 142                     '////// FORMA RESERVA DE PEDIDOS
                         frmPOControllerAfter(FormUID, pVal)
+
+                    Case "tekPagos"                     '////// FORMA RESERVA DE PEDIDOS
+                        frmPaymentContAf(FormUID, pVal)
 
                 End Select
             End If
         End If
 
     End Sub
+
 
     '//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     '// CONTROLADOR DE EVENTOS FORMA PEDIDOS DE COMPRAS
@@ -126,8 +131,7 @@
         Dim oPO As PO
         Dim otekPagos As FrmtekPagos
         Dim coForm As SAPbouiCOM.Form
-        Dim DocNum, DocEntry, stTabla, DocCur As String
-        Dim DocTotal As Integer
+        Dim DocNum, stTabla, DocCur As String
         Dim stQueryH As String
         Dim oRecSetH As SAPbobsCOM.Recordset
         Dim oDatatable As SAPbouiCOM.DBDataSource
@@ -188,6 +192,46 @@
         Finally
             oPO = Nothing
         End Try
+    End Sub
+
+    Private Sub frmPaymentContAf(ByVal FormUID As String, ByVal pVal As SAPbouiCOM.ItemEvent)
+
+        Dim oInvoices As Invoices
+        Dim coForm As SAPbouiCOM.Form
+        Dim Monto As Integer
+
+        Try
+
+            Select Case pVal.EventType
+
+                                '//////Evento Presionar Item
+                Case SAPbouiCOM.BoEventTypes.et_ITEM_PRESSED
+
+                    Select Case pVal.ItemUID
+                                    '--- Boton Movimientos del Pedido
+                        Case "4"
+
+                            coForm = SBOApplication.Forms.Item(FormUID)
+                            Monto = coForm.DataSources.UserDataSources.Item("dsMonto").Value
+
+                            'If Monto Is Nothing Then
+
+                            'Else
+
+                            oInvoices = New Invoices
+                            oInvoices.dataInvoice(DocEntry, Monto)
+                            'End If
+
+                    End Select
+
+            End Select
+
+        Catch ex As Exception
+            SBOApplication.MessageBox("Error en el evento sobre Forma Pedido de Compras. " & ex.Message)
+        Finally
+
+        End Try
+
     End Sub
 
 End Class
