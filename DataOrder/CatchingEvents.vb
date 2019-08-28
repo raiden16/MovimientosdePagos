@@ -197,8 +197,9 @@
     Private Sub frmPaymentContAf(ByVal FormUID As String, ByVal pVal As SAPbouiCOM.ItemEvent)
 
         Dim oInvoices As Invoices
+        Dim otekPagos As FrmtekPagos
         Dim coForm As SAPbouiCOM.Form
-        Dim Monto As Integer
+        Dim Monto As String
 
         Try
 
@@ -214,13 +215,18 @@
                             coForm = SBOApplication.Forms.Item(FormUID)
                             Monto = coForm.DataSources.UserDataSources.Item("dsMonto").Value
 
-                            'If Monto Is Nothing Then
+                            If Monto = "" Then
 
-                            'Else
+                                SBOApplication.MessageBox("Por favor coloca el monto deseado para la factura de anticipo.")
 
-                            oInvoices = New Invoices
-                            oInvoices.dataInvoice(DocEntry, Monto)
-                            'End If
+                            Else
+
+                                oInvoices = New Invoices
+                                otekPagos = New FrmtekPagos
+                                oInvoices.dataInvoice(DocEntry, Monto)
+                                otekPagos.cargarMovimientos(DocEntry)
+
+                            End If
 
                     End Select
 

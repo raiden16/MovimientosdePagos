@@ -19,13 +19,14 @@
 
     '//----- ABRE LA FORMA DENTRO DE LA APLICACION
     Public Sub openForm(ByVal psDirectory As String, ByVal psDocEntry As String, ByVal psTotal As Integer)
-        Dim stQueryH As String
-        Dim oRecSetH As SAPbobsCOM.Recordset
+        Dim stQueryH, stQueryH2, Status As String
+        Dim oRecSetH, oRecSetH2 As SAPbobsCOM.Recordset
         Dim Monto As Integer
 
         Try
 
             oRecSetH = cSBOCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset)
+            oRecSetH2 = cSBOCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset)
             csFormUID = "tekPagos"
             '//CARGA LA FORMA
             If (loadFormXML(cSBOApplication, csFormUID, psDirectory + "\Forms\" + csFormUID + ".srf") <> 0) Then
@@ -76,12 +77,18 @@
 
             oRecSetH.DoQuery(stQueryH)
 
-            If oRecSetH.RecordCount > 0 Then
+            stQueryH2 = "Select ""DocStatus"" from ""OPOR"" where ""DocEntry""=" & psDocEntry
+
+            oRecSetH2.DoQuery(stQueryH2)
+
+            If oRecSetH.RecordCount > 0 Or oRecSetH2.RecordCount > 0 Then
                 oRecSetH.MoveFirst()
+                oRecSetH2.MoveFirst()
 
                 Monto = oRecSetH.Fields.Item("Monto").Value
+                Status = oRecSetH2.Fields.Item("DocStatus").Value
 
-                If Monto = psTotal Then
+                If Monto = psTotal Or Status = "C" Then
 
                     coForm.Items.Item("4").Enabled = False
 

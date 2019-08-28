@@ -11,7 +11,7 @@
         SBOCompany = oCatchingEvents.SBOCompany
     End Sub
 
-    Public Sub dataInvoice(ByVal DocEntry As String, ByVal DocTotal As Integer)
+    Public Sub dataInvoice(ByVal DocEntry As String, ByVal DocTotal As Double)
 
         Dim stQueryH As String
         Dim oRecSetH As SAPbobsCOM.Recordset
