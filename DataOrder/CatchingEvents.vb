@@ -4,7 +4,8 @@
     Friend SBOCompany As SAPbobsCOM.Company '//OBJETO COMPAÑIA
     Friend csDirectory As String '//DIRECTORIO DONDE SE ENCUENTRAN LOS .SRF
     Friend DocEntry As String
-    Dim DocTotal As Integer
+    Dim DocTotal As Double
+    Dim MontoAcumulado As Double
 
     Public Sub New()
         MyBase.New()
@@ -178,7 +179,7 @@
                                 DocEntry = oRecSetH.Fields.Item("DocEntry").Value
 
                                 otekPagos = New FrmtekPagos
-                                otekPagos.openForm(csDirectory, DocEntry, DocTotal)
+                                MontoAcumulado = otekPagos.openForm(csDirectory, DocEntry, DocTotal)
                                 otekPagos.cargarMovimientos(DocEntry)
 
                             End If
@@ -200,6 +201,7 @@
         Dim otekPagos As FrmtekPagos
         Dim coForm As SAPbouiCOM.Form
         Dim Monto As String
+        Dim MontoTotal As Double
 
         Try
 
@@ -211,7 +213,8 @@
                     Select Case pVal.ItemUID
                                     '--- Boton Movimientos del Pedido
                         Case "4"
-
+                            oInvoices = New Invoices
+                            otekPagos = New FrmtekPagos
                             coForm = SBOApplication.Forms.Item(FormUID)
                             Monto = coForm.DataSources.UserDataSources.Item("dsMonto").Value
 
@@ -221,10 +224,19 @@
 
                             Else
 
-                                oInvoices = New Invoices
-                                otekPagos = New FrmtekPagos
-                                oInvoices.dataInvoice(DocEntry, Monto)
-                                otekPagos.cargarMovimientos(DocEntry)
+                                MontoTotal = Monto + MontoAcumulado
+
+                                If (MontoTotal > DocTotal) Then
+
+                                    SBOApplication.MessageBox("El monto colocado sobrepasa el total del pedido.")
+
+                                Else
+
+                                    oInvoices.dataInvoice(DocEntry, Monto)
+                                    MontoAcumulado = otekPagos.openForm(csDirectory, DocEntry, DocTotal)
+                                    otekPagos.cargarMovimientos(DocEntry)
+
+                                End If
 
                             End If
 

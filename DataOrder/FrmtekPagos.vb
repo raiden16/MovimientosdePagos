@@ -5,6 +5,7 @@
     Private coForm As SAPbouiCOM.Form           '//FORMA
     Private csFormUID As String
     Private stDocNum As String
+    Friend Monto As Double
 
 
     '//----- METODO DE CREACION DE LA CLASE
@@ -18,10 +19,10 @@
     'Private Property stRuta As String
 
     '//----- ABRE LA FORMA DENTRO DE LA APLICACION
-    Public Sub openForm(ByVal psDirectory As String, ByVal psDocEntry As String, ByVal psTotal As Integer)
+    Public Function openForm(ByVal psDirectory As String, ByVal psDocEntry As String, ByVal psTotal As Integer)
         Dim stQueryH, stQueryH2, Status As String
         Dim oRecSetH, oRecSetH2 As SAPbobsCOM.Recordset
-        Dim Monto As Integer
+        'Dim Monto As Integer
 
         Try
 
@@ -37,39 +38,50 @@
             '--- Referencia de Forma
             setForm(csFormUID)
 
-            stQueryH = "Select 'Total' as ""Movimiento"", Sum(T0.""Monto"") as ""Monto"", T0.""Moneda"" from
+            stQueryH = "Select null as ""Documento"",'Total' as ""Movimiento"", null as ""Estatus"", Sum(T0.""Monto"") as ""Monto"", T0.""Moneda"" from
 
                        (Select 
 
-                       case when T3.""DocCur""<>'MXN' then T3.""DocTotalFC"" else T3.""DocTotal"" end as ""Monto"",
+                       case when T3.""DocCur""<>'MXN' and ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocTotalFC""
+                       when T3.""DocCur""='MXN' and ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocTotal"" 
+                       else null
+                       end as ""Monto"",
 
-                       T3.""DocCur"" as ""Moneda"",
+                       case when ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocCur"" else null end as ""Moneda"",
 
-                       T3.""DocNum"" 
+                       case when ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocNum"" else null end as ""DocNum""
+                       
 
                        From ""OPOR"" T0 
                        Inner Join ""POR1"" T1 on T1.""DocEntry""=T0.""DocEntry""
-                       Left Outer Join ""DPO1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode""=T1.""ItemCode"" and ifnull(T2.""TrgetEntry"",0)<>19
+                       Left Outer Join ""DPO1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode"" =T1.""ItemCode""
                        Left Outer Join ""ODPO"" T3 on T3.""DocEntry""=T2.""DocEntry""
-                       Where T0.""DocEntry"" = " & psDocEntry & " 
-                       group by T3.""DocNum"",T3.""DocCur"",T3.""DocTotalFC"",T3.""DocTotal""
+                       Left Outer Join ""RPC1"" T6 on T6.""BaseEntry""=T2.""DocEntry"" And T6.""BaseType""=T2.""ObjType"" And T6.""BaseLine""=T2.""LineNum"" And T6.""ItemCode""=T2.""ItemCode""
+                       Left Outer Join ""ORPC"" T7 on T7.""DocEntry""=T6.""DocEntry""
+                       Where T0.""DocEntry"" = 2203
+                       group by T3.""DocNum"", T3.""DocCur"", T3.""DocTotalFC"", T3.""DocTotal"", T7.""CANCELED""
                        
                        UNION ALL
                        
                        Select 
 
-                       case when T3.""DocCur""<>'MXN' then T3.""DocTotalFC"" else T3.""DocTotal"" end as ""Monto"",
+                       case when T3.""DocCur""<>'MXN' and ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocTotalFC""
+                       when T3.""DocCur""='MXN' and ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocTotal"" 
+                       else null
+                       end as ""Monto"",
 
-                       T3.""DocCur"" as ""Moneda"",
+                       case when ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocCur"" else null end as ""Moneda"",
 
-                       T3.""DocNum"" 
+                       case when ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocNum"" else null end as ""DocNum""
 
                        From ""OPOR"" T0 
                        Inner Join ""POR1"" T1 on T1.""DocEntry""=T0.""DocEntry""
-                       Left Outer Join ""PCH1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode""=T1.""ItemCode"" and ifnull(T2.""TrgetEntry"",0)<>19
+                       Left Outer Join ""PCH1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode""=T1.""ItemCode""
                        Left Outer Join ""OPCH"" T3 on T3.""DocEntry""=T2.""DocEntry""
-                       Where T0.""DocEntry"" = " & psDocEntry & " 
-                       group by T3.""DocNum"",T3.""DocCur"",T3.""DocTotalFC"",T3.""DocTotal"") T0
+                       Left Outer Join ""RPC1"" T6 on T6.""BaseEntry""=T2.""DocEntry"" and T6.""BaseType""=T2.""ObjType"" and T6.""BaseLine""=T2.""LineNum"" and T6.""ItemCode""=T2.""ItemCode""
+                       Left Outer Join ""ORPC"" T7 on T7.""DocEntry""=T6.""DocEntry""
+                       Where T0.""DocEntry"" = 2203
+                       group by T3.""DocNum"",T3.""DocCur"",T3.""DocTotalFC"",T3.""DocTotal"",T7.""CANCELED"") T0
 
                        where T0.""Monto"" is not null
                        
@@ -88,6 +100,7 @@
                 Monto = oRecSetH.Fields.Item("Monto").Value
                 Status = oRecSetH2.Fields.Item("DocStatus").Value
 
+
                 If Monto = psTotal Or Status = "C" Then
 
                     coForm.Items.Item("4").Enabled = False
@@ -100,13 +113,15 @@
             coForm.Refresh()
             coForm.Visible = True
 
+            Return Monto
+
         Catch ex As Exception
             If (ex.Message <> "") Then
                 cSBOApplication.MessageBox("FrmTratamientoPedidos. No se pudo iniciar la forma. " & ex.Message)
             End If
             Me.close()
         End Try
-    End Sub
+    End Function
 
 
     '//----- CIERRA LA VENTANA
@@ -188,6 +203,7 @@
 
         Try
 
+            coForm.DataSources.UserDataSources.Item("dsMonto").Value = Nothing
             oGrid = coForm.Items.Item("1").Specific
             oGrid.DataTable.Clear()
             oRecSet = cSBOCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset)
