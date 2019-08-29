@@ -35,6 +35,7 @@
                 CardCode = oRecSetH.Fields.Item("CardCode").Value
                 DocCur = oRecSetH.Fields.Item("DocCur").Value
 
+
                 oInvoice.CardCode = CardCode
                 oInvoice.DocCurrency = DocCur
                 oInvoice.DocDate = DateTime.Now.ToString("dd/MM/yyyy")
