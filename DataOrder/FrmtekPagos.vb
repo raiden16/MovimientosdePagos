@@ -19,7 +19,7 @@
     'Private Property stRuta As String
 
     '//----- ABRE LA FORMA DENTRO DE LA APLICACION
-    Public Function openForm(ByVal psDirectory As String, ByVal psDocEntry As String, ByVal psTotal As Integer)
+    Public Function openForm(ByVal psDirectory As String, ByVal psDocEntry As String, ByVal psTotal As Double)
         Dim stQueryH, stQueryH2, Status As String
         Dim oRecSetH, oRecSetH2 As SAPbobsCOM.Recordset
         'Dim Monto As Integer
@@ -38,54 +38,9 @@
             '--- Referencia de Forma
             setForm(csFormUID)
 
-            stQueryH = "Select null as ""Documento"",'Total' as ""Movimiento"", null as ""Estatus"", Sum(T0.""Monto"") as ""Monto"", T0.""Moneda"" from
+            '" & psDocEntry & "
 
-                       (Select 
-
-                       case when T3.""DocCur""<>'MXN' and ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocTotalFC""
-                       when T3.""DocCur""='MXN' and ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocTotal"" 
-                       else null
-                       end as ""Monto"",
-
-                       case when ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocCur"" else null end as ""Moneda"",
-
-                       case when ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocNum"" else null end as ""DocNum""
-                       
-
-                       From ""OPOR"" T0 
-                       Inner Join ""POR1"" T1 on T1.""DocEntry""=T0.""DocEntry""
-                       Left Outer Join ""DPO1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode"" =T1.""ItemCode""
-                       Left Outer Join ""ODPO"" T3 on T3.""DocEntry""=T2.""DocEntry""
-                       Left Outer Join ""RPC1"" T6 on T6.""BaseEntry""=T2.""DocEntry"" And T6.""BaseType""=T2.""ObjType"" And T6.""BaseLine""=T2.""LineNum"" And T6.""ItemCode""=T2.""ItemCode""
-                       Left Outer Join ""ORPC"" T7 on T7.""DocEntry""=T6.""DocEntry""
-                       Where T0.""DocEntry"" = 2203
-                       group by T3.""DocNum"", T3.""DocCur"", T3.""DocTotalFC"", T3.""DocTotal"", T7.""CANCELED""
-                       
-                       UNION ALL
-                       
-                       Select 
-
-                       case when T3.""DocCur""<>'MXN' and ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocTotalFC""
-                       when T3.""DocCur""='MXN' and ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocTotal"" 
-                       else null
-                       end as ""Monto"",
-
-                       case when ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocCur"" else null end as ""Moneda"",
-
-                       case when ifnull(T7.""CANCELED"",'N')<>'Y' then T3.""DocNum"" else null end as ""DocNum""
-
-                       From ""OPOR"" T0 
-                       Inner Join ""POR1"" T1 on T1.""DocEntry""=T0.""DocEntry""
-                       Left Outer Join ""PCH1"" T2 on T2.""BaseEntry""=T1.""DocEntry"" and T2.""BaseType""=T1.""ObjType"" and T2.""BaseLine""=T1.""LineNum"" and T2.""ItemCode""=T1.""ItemCode""
-                       Left Outer Join ""OPCH"" T3 on T3.""DocEntry""=T2.""DocEntry""
-                       Left Outer Join ""RPC1"" T6 on T6.""BaseEntry""=T2.""DocEntry"" and T6.""BaseType""=T2.""ObjType"" and T6.""BaseLine""=T2.""LineNum"" and T6.""ItemCode""=T2.""ItemCode""
-                       Left Outer Join ""ORPC"" T7 on T7.""DocEntry""=T6.""DocEntry""
-                       Where T0.""DocEntry"" = 2203
-                       group by T3.""DocNum"",T3.""DocCur"",T3.""DocTotalFC"",T3.""DocTotal"",T7.""CANCELED"") T0
-
-                       where T0.""Monto"" is not null
-                       
-                       group by T0.""Moneda"";"
+            stQueryH = "call ""Total_de_Pedidos"" ('" & psDocEntry & "')"
 
             oRecSetH.DoQuery(stQueryH)
 
@@ -101,7 +56,7 @@
                 Status = oRecSetH2.Fields.Item("DocStatus").Value
 
 
-                If Monto = psTotal Or Status = "C" Then
+                If Monto >= psTotal Or Status = "C" Then
 
                     coForm.Items.Item("4").Enabled = False
 
