@@ -1,4 +1,6 @@
-﻿Public Class FrmtekPagos
+﻿Imports System.Drawing
+
+Public Class FrmtekPagos
 
     Private cSBOApplication As SAPbouiCOM.Application '//OBJETO DE APLICACION
     Private cSBOCompany As SAPbobsCOM.Company     '//OBJETO DE CONEXION
@@ -166,6 +168,19 @@
             stQuery = "call ""Movimientos_de_Pedidos"" ('" & stDocEntry & "')"
 
             oGrid.DataTable.ExecuteQuery(stQuery)
+
+            For numfila As Integer = 0 To oGrid.Rows.Count - 1
+                Dim valorFila As Integer = oGrid.GetDataTableRowIndex(numfila)
+                If (valorFila <> -1) Then
+                    If (oGrid.DataTable.GetValue("Estatus", valorFila) = "Por pagar") Then
+                        oGrid.CommonSetting.SetCellBackColor(numfila + 1, 3, ColorTranslator.ToOle(Color.Red))
+                    ElseIf (oGrid.DataTable.GetValue("Estatus", valorFila) <> "Por pagar" And oGrid.DataTable.GetValue("Movimiento", valorFila) <> "Total") Then
+                        oGrid.CommonSetting.SetCellBackColor(numfila + 1, 3, ColorTranslator.ToOle(Color.LightGreen))
+                    End If
+                End If
+            Next
+
+
 
             Return 0
 
