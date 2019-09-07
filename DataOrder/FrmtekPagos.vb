@@ -40,6 +40,8 @@ Public Class FrmtekPagos
             '--- Referencia de Forma
             setForm(csFormUID)
 
+            cargarComboPorcentaje()
+
             '" & psDocEntry & "
 
             stQueryH = "call ""Total_de_Pedidos"" ('" & psDocEntry & "')"
@@ -128,9 +130,14 @@ Public Class FrmtekPagos
         Dim loDS As SAPbouiCOM.UserDataSource
         Dim oDataTable As SAPbouiCOM.DataTable
         Dim oGrid As SAPbouiCOM.Grid
+        Dim oCombo As SAPbouiCOM.ComboBox
 
         Try
             bindUserDataSources = 0
+
+            loDS = coForm.DataSources.UserDataSources.Add("dsPorcen", SAPbouiCOM.BoDataType.dt_SHORT_TEXT) 'Creo el datasources
+            oCombo = coForm.Items.Item("7").Specific  'identifico mi combobox
+            oCombo.DataBind.SetBound(True, "", "dsPorcen")   ' uno mi userdatasources a mi combobox
 
             loDS = coForm.DataSources.UserDataSources.Add("dsMonto", SAPbouiCOM.BoDataType.dt_SHORT_TEXT) 'Creo el datasources
             loText = coForm.Items.Item("3").Specific  'identifico mi caja de texto
@@ -148,6 +155,46 @@ Public Class FrmtekPagos
             loDS = Nothing
             oDataTable = Nothing
             oGrid = Nothing
+        End Try
+    End Function
+
+
+    '---- Carga de Porcentajes
+    Public Function cargarComboPorcentaje()
+
+        Dim oCombo As SAPbouiCOM.ComboBox
+        Dim oRecSet As SAPbobsCOM.Recordset
+
+        Try
+            cargarComboPorcentaje = 0
+            '--- referencia de combo 
+            oCombo = coForm.Items.Item("7").Specific
+            coForm.Freeze(True)
+            '---- SI YA SE TIENEN VALORES, SE ELIMMINAN DEL COMBO
+            If oCombo.ValidValues.Count > 0 Then
+                Do
+                    oCombo.ValidValues.Remove(0, SAPbouiCOM.BoSearchKey.psk_Index)
+                Loop While oCombo.ValidValues.Count > 0
+            End If
+            '--- realizar consulta
+            oRecSet = cSBOCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset)
+            oRecSet.DoQuery("Select null,null From DUMMY Union All Select 5,'5%' From DUMMY Union All Select 10,'10%' From DUMMY Union All Select 15,'15%' From DUMMY Union All Select 20,'20%' From DUMMY Union All Select 25,'25%' From DUMMY Union All Select 30,'30%' From DUMMY Union All Select 35,'35%' From DUMMY Union All Select 40,'40%' From DUMMY Union All Select 45,'45%' From DUMMY Union All Select 50,'50%' From DUMMY Union All Select 55,'55%' From DUMMY Union All Select 60,'60%' From DUMMY Union All Select 65,'65%' From DUMMY Union All Select 70,'70%' From DUMMY Union All Select 75,'75%' From DUMMY Union All Select 80,'80%' From DUMMY Union All Select 85,'85%' From DUMMY Union All Select 90,'90%' From DUMMY Union All Select 95,'95%' From DUMMY Union All Select 100,'100%' From DUMMY")
+            '---- cargamos resultado
+            oRecSet.MoveFirst()
+            Do While oRecSet.EoF = False
+                oCombo.ValidValues.Add(oRecSet.Fields.Item(0).Value, oRecSet.Fields.Item(1).Value)
+                oRecSet.MoveNext()
+            Loop
+            oCombo.Select(0, SAPbouiCOM.BoSearchKey.psk_Index)
+            coForm.Freeze(False)
+
+
+        Catch ex As Exception
+            coForm.Freeze(False)
+            MsgBox("FrmTratamientoPedidos. cargarComboPorcentaje: " & ex.Message)
+        Finally
+            oCombo = Nothing
+            oRecSet = Nothing
         End Try
     End Function
 

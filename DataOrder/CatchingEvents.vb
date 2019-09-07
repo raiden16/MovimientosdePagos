@@ -201,7 +201,9 @@
         Dim otekPagos As FrmtekPagos
         Dim coForm As SAPbouiCOM.Form
         Dim Monto As String
+        Dim Porcentaje As Integer
         Dim MontoTotal As Double
+        Dim RestoP As Decimal
 
         Try
 
@@ -217,12 +219,17 @@
                             otekPagos = New FrmtekPagos
                             coForm = SBOApplication.Forms.Item(FormUID)
                             Monto = coForm.DataSources.UserDataSources.Item("dsMonto").Value
+                            Porcentaje = coForm.DataSources.UserDataSources.Item("dsPorcen").Value
 
-                            If Monto = "" Then
+                            If Monto = "" And Porcentaje = 0 Then
 
-                                SBOApplication.MessageBox("Por favor coloca el monto deseado para la factura de anticipo.")
+                                SBOApplication.MessageBox("Por favor coloca el monto o el porcentaje deseado para la factura de anticipo.")
 
-                            Else
+                            ElseIf Monto <> "" And Porcentaje <> 0 Then
+
+                                SBOApplication.MessageBox("Por favor coloca solo un metodo de pago por monto o por porcentaje.")
+
+                            ElseIf Monto <> "" And Porcentaje = 0 Then
 
                                 MontoTotal = Monto + MontoAcumulado
 
@@ -237,6 +244,14 @@
                                     otekPagos.cargarMovimientos(DocEntry)
 
                                 End If
+
+                            ElseIf Monto = "" And Porcentaje <> 0 Then
+
+                                RestoP = (DocTotal - MontoAcumulado) * (Porcentaje / 100)
+
+                                oInvoices.dataInvoice(DocEntry, RestoP)
+                                MontoAcumulado = otekPagos.openForm(csDirectory, DocEntry, DocTotal)
+                                otekPagos.cargarMovimientos(DocEntry)
 
                             End If
 

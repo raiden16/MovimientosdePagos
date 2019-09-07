@@ -11,7 +11,7 @@
         SBOCompany = oCatchingEvents.SBOCompany
     End Sub
 
-    Public Sub dataInvoice(ByVal DocEntry As String, ByVal DocTotal As Double)
+    Public Sub dataInvoice(ByVal DocEntry As String, ByVal DocTotal As Decimal)
 
         Dim stQueryH As String
         Dim oRecSetH As SAPbobsCOM.Recordset
@@ -39,7 +39,7 @@
                 oInvoice.DocCurrency = DocCur
                 oInvoice.DocDate = DateTime.Now.ToString("dd/MM/yyyy")
                 oInvoice.Comments = "Basado en Pedidos " & DocNum & "."
-                oInvoice.DocTotal = DocTotal
+                oInvoice.DocTotal = Math.Round(DocTotal, 2, MidpointRounding.ToEven)
                 oInvoice.DownPaymentType = 1
 
                 stQueryH = "Select T0.""ItemCode"",T0.""Quantity"",T0.""Price"",T0.""DiscPrcnt"",T0.""TaxCode"",T0.""WhsCode"",T0.""Currency"",T0.""DocEntry"",T0.""ObjType"",T0.""LineNum"" from POR1 T0 where T0.""DocEntry""=" & DocEntry
